@@ -66,7 +66,7 @@ svg text{fill:var(--text-secondary);font-size:11px}
 <body>
 <header>
   <h1>TLECUIL <span style="font-weight:400;color:var(--text-secondary)">· First-Order Fission Surface Power Sizer</span></h1>
-  <p><em>Tlecuilli</em> (Nahuatl): the three-stone hearth. This page runs the same equations as <code>tlecuil.py</code> (v0.2.0), and a parity check confirms both give identical results. There is no power limit: type any value in a number box. Areas are total radiating area (both faces) including margin, the convention NASA uses. Presets load published NASA design points and show the published values for comparison.</p>
+  <p><em>Tlecuilli</em> (Nahuatl): the three-stone hearth. This page runs the same equations as <code>tlecuil.py</code> (v0.2.1), and a parity check confirms both give identical results. There is no power limit: type any value in a number box. Areas are total radiating area (both faces) including margin, the convention NASA uses. Presets load published NASA design points and show the published values for comparison.</p>
 </header>
 
 <div class="wrap">
@@ -115,7 +115,7 @@ svg text{fill:var(--text-secondary);font-size:11px}
 <script id="engine">
 // ENGINE-START
 const FSP = (() => {
-  // Mirrors tlecuil.py v0.2.0. Equation numbers refer to docs/tlecuil_theory.pdf.
+  // Mirrors tlecuil.py v0.2.1. Equation numbers refer to docs/tlecuil_theory.pdf.
   const SIGMA = 5.670374419e-8, NA = 6.02214076e23, MEV = 1.602176634e-13,
         M235 = 235.0439299, YEAR = 365.25 * 86400;      // CODATA 2018
 

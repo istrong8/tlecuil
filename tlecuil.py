@@ -48,7 +48,7 @@ import math
 from dataclasses import dataclass, asdict, replace
 from typing import Literal
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 # ---------------------------------------------------------------------------
 # 0. PHYSICAL CONSTANTS -- CODATA 2018 [codata2018]

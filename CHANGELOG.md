@@ -3,6 +3,15 @@
 All notable changes are recorded here. A change that alters any numerical
 result increments at least the MINOR version (see docs/tlecuil_vv_plan.pdf, Sec. 8).
 
+## [0.2.1] - 2026-11-13
+### Changed
+- Review IR-001 relabelled as AI-assisted (performed by a separate AI model
+  instance), not independent human review. IR-002, an independent human review,
+  added to the V&V plan as planned.
+- Author name updated to Irais Strong.
+- Interactive page published at https://istrong8.github.io/tlecuil/.
+No numerical results changed.
+
 ## [0.2.0] - 2026-11-11
 ### Fixed
 - PR-001: v0.1 divided by the number of radiating sides twice. The "emitting area"
@@ -19,7 +28,7 @@ result increments at least the MINOR version (see docs/tlecuil_vv_plan.pdf, Sec.
 - Software QA and V&V plan (docs/tlecuil_vv_plan.tex).
 - docs/sync_refs.py: keeps code comments in step with equation numbers.
 - Interactive page with NASA design presets; JavaScript/Python parity check.
-- Independent technical review IR-001; findings dispositioned.
+- AI-assisted technical review IR-001; findings dispositioned.
 
 ## [0.1.0] - 2026-11-11
 - First draft (fsp_sizer.py). Superseded; see PR-001.

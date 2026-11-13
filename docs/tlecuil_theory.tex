@@ -45,8 +45,8 @@
 \title{\tlecuil{}: A First-Order Fission Surface Power Sizer\\[6pt]
 \large Theory, verification, benchmarks against published NASA designs,\\
 and comparison with the NASA EZ FSP Sizer}
-\author{Ira Strong}
-\date{Version 0.2.0 --- \today}
+\author{Irais Strong}
+\date{Version 0.2.1 --- \today}
 
 \begin{document}
 \maketitle
@@ -69,8 +69,8 @@ design, from a different study, falls just outside the $\pm15\,\%$ acceptance ba
 for reasons analysed here. Electrical-chain and first-law quantities agree to within
 5\,\%. Section~\ref{sec:ez}
 compares \tlecuil{} with NASA Glenn's EZ FSP Sizer and sets out where each is
-the better tool. An independent review of v0.2 found no critical errors; its
-findings are incorporated.
+the better tool. An AI-assisted review of v0.2 (IR-001) found no critical errors; its
+findings are incorporated. Independent human review is planned (IR-002).
 \end{abstract}
 
 \tableofcontents
@@ -159,7 +159,7 @@ number of radiating sides twice. The value it labelled ``emitting area'' was in 
 the panel planform, half the true total radiating area for two-sided panels, and the
 value it labelled ``planform'' was half the true planform. Also fixed a round-off
 error in the fluid-loop integral for sink temperatures near 0\,K, found by an
-independent review. Added fixed parasitic loads, reactor heat losses, panel
+AI-assisted review (IR-001). Added fixed parasitic loads, reactor heat losses, panel
 effectiveness, area margin, citations, benchmarks, and the EZ FSP Sizer
 comparison. A regression test now guards the correction.\\
 \bottomrule

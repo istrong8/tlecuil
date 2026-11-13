@@ -21,7 +21,7 @@
 \newcolumntype{L}{>{\raggedright\arraybackslash}X}
 
 \title{\tlecuil{} Software Quality Assurance and\\Verification \& Validation Plan}
-\author{Ira Strong}
+\author{Irais Strong}
 \date{Revision 0 (draft) --- \today\\[4pt]\small Applies to \tlecuil{} v0.2.x}
 
 \begin{document}
@@ -197,7 +197,7 @@ NR-01 & -- & all & all verification tests \\
 NR-02 & Eqs.~5.8--5.9 & \texttt{\_\allowbreak{}integral\_\allowbreak{}inv\_\allowbreak{}t4} & \texttt{small\_\allowbreak{}and\_\allowbreak{}large\_\allowbreak{}sinks\_\allowbreak{}match\_\allowbreak{}quadrature} \\
 IR-01 & -- & \texttt{web/tlecuil.html} & \texttt{check\_\allowbreak{}parity.js} (CI) \\
 DR-01 & all & comments & \texttt{docs/sync\_\allowbreak{}refs.py --check} (CI) \\
-DR-02 & Sec.~11 & \texttt{benchmarks.py} & benchmark tests; independent review IR-001 \\
+DR-02 & Sec.~11 & \texttt{benchmarks.py} & benchmark tests; AI-assisted review IR-001 \\
 \bottomrule
 \end{longtable}}
 
@@ -311,7 +311,7 @@ ID & Problem & Disposition \\
 \midrule
 \endhead
 PR-001 & v0.1 divided by the number of radiating sides twice; its reported ``emitting area'' was half the true radiating area for two-sided panels. Non-conservative. & Fixed in v0.2. Regression test \texttt{two\_sided\_\allowbreak{}panel\_\allowbreak{}\ldots}. User informed (revision history in Theory). \\
-PR-002 & The closed-form radiator integral lost precision for sink temperatures near 0\,K and could return a negative area at $10^{-3}$\,K. Found by independent review. & Fixed in v0.2 (series branch). Test \texttt{small\_and\_\allowbreak{}large\_\allowbreak{}sinks\_\allowbreak{}\ldots}. No published result affected (all used $T_s\ge185$\,K). \\
+PR-002 & The closed-form radiator integral lost precision for sink temperatures near 0\,K and could return a negative area at $10^{-3}$\,K. Found by AI-assisted review IR-001. & Fixed in v0.2 (series branch). Test \texttt{small\_and\_\allowbreak{}large\_\allowbreak{}sinks\_\allowbreak{}\ldots}. No published result affected (all used $T_s\ge185$\,K). \\
 \bottomrule
 \end{longtable}
 
@@ -322,11 +322,17 @@ PR-002 & The closed-form radiator integral lost precision for sink temperatures 
   \item \textbf{Independent technical review} of each release that changes the physics,
         by someone who did not write the change. The record keeps the reviewer, date,
         scope, findings and their disposition.
-  \item \textbf{IR-001 (v0.2).} Independent review of the equations, the code--document
-        consistency, the benchmark inputs against primary sources, and the citations.
+  \item \textbf{IR-001 (v0.2).} AI-assisted review of the equations, the code--document
+        consistency, the benchmark inputs against primary sources, and the citations,
+        performed by a separate instance of an AI model (Anthropic Claude) that did not
+        write the code. It is recorded as a review aid, \emph{not} as independent human
+        review.
         Result: no critical findings. Four major findings (overstated independence of the
         benchmarks, an undisclosed interpretation of a 2\,kWe load, PR-002, and an
         unsupported claim) and fifteen minor findings, all dispositioned in v0.2.
+  \item \textbf{IR-002 (planned).} Independent technical review by a qualified person who
+        did not write the code. The record will name the reviewer, date, scope, findings
+        and their disposition.
 \end{itemize}
 
 %=====================================================================
@@ -358,7 +364,7 @@ made by a new entry that refers to the old one.
 %=====================================================================
 \begin{enumerate}
   \item \textbf{v0.2 (now):} requirements, traceability, 16 tests, CI, problem reports,
-        one independent review.
+        one AI-assisted review (IR-001); independent human review IR-002 planned.
   \item \textbf{v0.3:} VT-01 to VT-07; golden-file regression; first signed release record.
   \item \textbf{v0.4:} VC-01 validation report (TDU); search for radiator-panel test data.
   \item \textbf{v1.0:} a frozen baseline with a complete record set, ready for a quality
