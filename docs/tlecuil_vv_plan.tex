@@ -1,0 +1,371 @@
+% =====================================================================
+% TLECUIL Software Quality Assurance and Verification & Validation Plan
+% Build:  latexmk -pdf tlecuil_vv_plan.tex   (same folder as references.bib)
+% =====================================================================
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{booktabs,longtable,array,tabularx}
+\usepackage{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage{enumitem}
+\usepackage[style=ieee,backend=biber,doi=true,url=true]{biblatex}
+\addbibresource{references.bib}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+
+\newtcolorbox{plain}{colback=violet!5,colframe=violet!60!black,title=In plain words,fonttitle=\bfseries\small}
+\newtcolorbox{decision}{colback=orange!6,colframe=orange!60!black,title=Decision needed,fonttitle=\bfseries\small}
+\newcommand{\tlecuil}{\textsc{Tlecuil}}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+
+\title{\tlecuil{} Software Quality Assurance and\\Verification \& Validation Plan}
+\author{Ira Strong}
+\date{Revision 0 (draft) --- \today\\[4pt]\small Applies to \tlecuil{} v0.2.x}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This plan defines how \tlecuil{}, an open first-order fission surface power sizer, will be
+verified, validated and controlled so that it can later be qualified for use in a formal
+quality assurance program. It classifies the software under ASME NQA-1-2024, DOE O 414.1F
+and NASA NPR 7150.2D. It then states the software requirements and traces each one to an
+equation, a function and a test. Finally, it sets out the verification and validation
+approach, configuration management, problem reporting, reviews and records. It is
+written to be usable by students as an introduction to software quality assurance for
+engineering codes.
+\end{abstract}
+
+\tableofcontents
+
+%=====================================================================
+\section{Purpose and scope}
+%=====================================================================
+\tlecuil{} computes a steady-state thermal--electrical balance of a fission surface power
+system: reactor thermal power, conversion efficiency, waste-heat loads, radiator areas and
+U-235 burned. Its equations are documented in \emph{TLECUIL: A First-Order Fission Surface
+Power Sizer} (the ``Theory'' document).
+
+This plan covers the Python engine (\texttt{tlecuil.py}), the benchmark and test
+scripts, the JavaScript copy of the engine in the interactive page, and the
+documentation. It does not cover any future mass, shielding or efficiency-map modules;
+each will be added to this plan when it is developed.
+
+\begin{plain}
+Software quality assurance (SQA) is a set of habits that let someone else trust your
+code without re-deriving it. Write down what the code must do; show that it does it;
+control every change; record every error and how it was fixed; and have someone
+independent check the work.
+\end{plain}
+
+%=====================================================================
+\section{What kind of software is \tlecuil{}?}\label{sec:class}
+%=====================================================================
+The answer depends on who uses it and for what. The same code can be ``research
+software'' in a thesis and ``design analysis software'' inside a licensed project. The
+grade is set by the \emph{use}, not by the code itself.
+
+\subsection{ASME NQA-1-2024, Part II, Subpart 2.7}
+NQA-1 is the consensus quality assurance standard for nuclear facility applications.
+Subpart 2.7 sets requirements for computer software used in that work
+\cite{nqa1_2024}. Within an NQA-1 program, \tlecuil{} would be \emph{custom-developed
+design and analysis software}: a program whose results support design outputs.
+
+Today \tlecuil{} is developed outside any organization's NQA-1 program, so NQA-1 does not
+formally apply. If an organization later wants to use it for design work, that
+organization would have to bring it under its own program, either by qualifying it as
+acquired or existing software or by re-developing it under its program. The aim of
+this plan is to make that a review of existing records rather than a rework.
+
+\subsection{DOE O 414.1F}
+DOE O 414.1F, approved in August 2026, defines safety software as including, at a
+minimum, software cited in a DOE-approved safety analysis or approved hazard analysis.
+It also requires appropriate software engineering consensus standards, without naming
+NQA-1 specifically \cite{doe4141f}. \tlecuil{} is \textbf{not safety software} under this
+definition. It would become safety software only if a DOE contractor cited it in such an
+analysis. The contractor's quality assurance program would then grade it.
+
+\subsection{NASA NPR 7150.2D}
+NASA classifies software from Class A (human-rated) to Class F (business and IT)
+\cite{npr7150_2d}.
+\begin{itemize}
+  \item Class E covers design-concept, research, technology and general-purpose software.
+        This describes \tlecuil{} as a research and teaching tool \textbf{today}.
+  \item Class D covers basic science and engineering design, and research and technology
+        software. \tlecuil{} would move to Class D if NASA used it to inform engineering
+        design decisions.
+  \item It is not safety-critical: it does not control hardware or protect people.
+\end{itemize}
+
+\subsection{Classification used in this plan}
+\begin{center}
+\begin{tabularx}{\textwidth}{lL}
+\toprule
+Attribute & Determination \\
+\midrule
+Software type & Custom-developed scientific / engineering analysis software \\
+Current use & Research, education, cross-checking published first-order results \\
+Safety software (DOE O 414.1F) & No, unless cited in a DOE-approved safety or hazard analysis \\
+NASA class (NPR 7150.2D) & E now; D if used for NASA engineering design \\
+NQA-1 Subpart 2.7 & Not invoked (no NQA-1 program); developed to be qualifiable as design and analysis software \\
+Grading of this plan & ``NQA-1-ready'' graded approach: the controls in Sections~\ref{sec:req}--\ref{sec:records}, with records kept so a later qualification can rely on them \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{decision}
+Before \tlecuil{} is used in any project under an employer's or sponsor's quality assurance
+program, confirm ownership and approvals for the code, and have that program's software
+quality authority confirm the classification above.
+\end{decision}
+
+%=====================================================================
+\section{Verification and validation framework}\label{sec:framework}
+%=====================================================================
+The plan follows the terminology of Oberkampf and Roy \cite{oberkampf2010vv}, the
+validation-uncertainty approach of ASME V\&V~20 \cite{asme_vv20}, and the life-cycle V\&V
+structure of IEEE 1012 \cite{ieee1012_2024}.
+\begin{description}[style=nextline]
+  \item[Code verification] \emph{Is the math coded correctly?} The code is compared with
+        exact answers: hand calculations, closed-form limits, conservation laws and
+        independent numerical integration.
+  \item[Solution verification] \emph{How large are the numerical errors in a given run?} For
+        \tlecuil{} these come from the series truncation in the radiator integral and from
+        the optimiser's tolerance. Both are bounded and tested.
+  \item[Validation] \emph{Does the model describe reality well enough for its intended
+        use?} The model is compared with measurements from hardware, with the experimental
+        and input uncertainties quantified. The validation comparison error is $E=S-D$
+        (simulation minus data), judged against the validation uncertainty $u_\text{val}$
+        \cite{asme_vv20}.
+  \item[Benchmarking] Comparison with other models or published design studies. It is
+        useful, but it is not validation (Theory, Sec.~11).
+\end{description}
+
+%=====================================================================
+\section{Software requirements}\label{sec:req}
+%=====================================================================
+Each requirement has an identifier so that it can be traced. ``Shall'' marks a binding
+requirement.
+\begin{longtable}{>{\ttfamily}p{0.09\textwidth}p{0.83\textwidth}}
+\toprule
+ID & Requirement \\
+\midrule
+\endhead
+FR-01 & The code shall compute converter gross power from delivered power, PMAD efficiency, and proportional and fixed parasitic loads (Theory Eq.~3.2). \\
+FR-02 & The code shall compute conversion efficiency as a fixed value or as a fraction of Carnot (Theory Eq.~4.4). \\
+FR-03 & The code shall reject any efficiency above the Carnot limit (Theory Eq.~4.3). \\
+FR-04 & The code shall compute reactor thermal power including reactor and piping losses (Theory Eq.~4.5). \\
+FR-05 & The code shall compute main radiator radiating area for isothermal and pumped-loop radiators, including panel effectiveness and margin (Theory Eqs.~5.5--5.9). \\
+FR-06 & The code shall report panel planform as radiating area divided by the number of radiating sides (Theory Eq.~5.2). \\
+FR-07 & The code shall compute the electronics radiator area (Theory Sec.~6). \\
+FR-08 & The code shall compute the U-235 mass fissioned (Theory Eq.~7.1). \\
+FR-09 & The code shall find the cold-end temperature that minimises radiator area (Theory Sec.~8). \\
+FR-10 & The code shall report the energy-balance residual on every run (Theory Eq.~6.2). \\
+FR-11 & The code shall reject non-physical inputs with an explanatory message. \\
+FR-12 & The code shall impose no upper limit on delivered power. \\
+NR-01 & Results shall agree with exact solutions to a relative error $\le10^{-9}$. \\
+NR-02 & The radiator integral shall be accurate to $\le10^{-9}$ relative error for sink temperatures from $10^{-9}$\,K to within 1\,\% of the outlet temperature. \\
+IR-01 & The JavaScript engine shall reproduce the Python engine to a relative difference $\le10^{-9}$ on all parity cases. \\
+DR-01 & Every equation shall be derived and cited in the Theory document, and every code reference to it shall carry its LaTeX label and current number. \\
+DR-02 & Every published input used in a benchmark shall be traceable to its source, with any interpretation disclosed. \\
+\bottomrule
+\end{longtable}
+
+%=====================================================================
+\section{Requirements traceability matrix}\label{sec:rtm}
+%=====================================================================
+{\small\begin{longtable}{>{\ttfamily}p{0.09\textwidth}p{0.2\textwidth}p{0.25\textwidth}p{0.36\textwidth}}
+\toprule
+Req. & Theory & Code & Test(s) in \texttt{test\_\allowbreak{}tlecuil.py} \\
+\midrule
+\endhead
+FR-01 & Eqs.~3.1--3.3 & \texttt{size\_\allowbreak{}fsp} & \texttt{hand\_\allowbreak{}calculation}; \texttt{energy\_\allowbreak{}conserved\_\allowbreak{}everywhere}; benchmark S1--S3 \\
+FR-02 & Eq.~4.4 & \texttt{conversion\_\allowbreak{}efficiency} & \texttt{optimum\_\allowbreak{}matches\_\allowbreak{}closed\_\allowbreak{}form} \\
+FR-03 & Eq.~4.3 & \texttt{validate} & \texttt{second\_\allowbreak{}law\_\allowbreak{}guard} \\
+FR-04 & Eq.~4.5 & \texttt{size\_\allowbreak{}fsp} & \texttt{energy\_\allowbreak{}conserved\_\allowbreak{}everywhere} \\
+FR-05 & Eqs.~5.5--5.9 & \texttt{radiating\_\allowbreak{}area\_\allowbreak{}m2}, \texttt{\_\allowbreak{}integral\_\allowbreak{}inv\_\allowbreak{}t4} & \texttt{fluid\_\allowbreak{}loop\_\allowbreak{}matches\_\allowbreak{}quadrature}; \texttt{fluid\_\allowbreak{}loop\_\allowbreak{}limit\_\allowbreak{}is\_\allowbreak{}isothermal}; \texttt{zero\_\allowbreak{}kelvin\_\allowbreak{}sink\_\allowbreak{}branch}; \texttt{small\_\allowbreak{}and\_\allowbreak{}large\_\allowbreak{}sinks\_\allowbreak{}match\_\allowbreak{}quadrature}; benchmarks B1--B4 \\
+FR-06 & Eq.~5.2 & \texttt{size\_\allowbreak{}fsp} & \texttt{two\_\allowbreak{}sided\_\allowbreak{}panel\_\allowbreak{}halves\_\allowbreak{}planform\_\allowbreak{}not\_\allowbreak{}radiating\_\allowbreak{}area} \\
+FR-07 & Sec.~6 & \texttt{size\_\allowbreak{}fsp} & electronics comparison (information only) \\
+FR-08 & Eq.~7.1 & \texttt{size\_\allowbreak{}fsp} & \texttt{fuel\_\allowbreak{}rule\_\allowbreak{}of\_\allowbreak{}thumb} \\
+FR-09 & Sec.~8 & \texttt{optimal\_\allowbreak{}cold\_\allowbreak{}temperature} & \texttt{optimum\_\allowbreak{}matches\_\allowbreak{}closed\_\allowbreak{}form} \\
+FR-10 & Eq.~6.2 & \texttt{size\_\allowbreak{}fsp} & \texttt{energy\_\allowbreak{}conserved\_\allowbreak{}everywhere} \\
+FR-11 & -- & \texttt{validate} & \texttt{second\_\allowbreak{}law\_\allowbreak{}guard} (planned: one test per rule, VT-07) \\
+FR-12 & Sec.~9 & all & \texttt{linear\_\allowbreak{}scaling\_\allowbreak{}without\_\allowbreak{}fixed\_\allowbreak{}loads} (to 5000\,kWe) \\
+NR-01 & -- & all & all verification tests \\
+NR-02 & Eqs.~5.8--5.9 & \texttt{\_\allowbreak{}integral\_\allowbreak{}inv\_\allowbreak{}t4} & \texttt{small\_\allowbreak{}and\_\allowbreak{}large\_\allowbreak{}sinks\_\allowbreak{}match\_\allowbreak{}quadrature} \\
+IR-01 & -- & \texttt{web/tlecuil.html} & \texttt{check\_\allowbreak{}parity.js} (CI) \\
+DR-01 & all & comments & \texttt{docs/sync\_\allowbreak{}refs.py --check} (CI) \\
+DR-02 & Sec.~11 & \texttt{benchmarks.py} & benchmark tests; independent review IR-001 \\
+\bottomrule
+\end{longtable}}
+
+%=====================================================================
+\section{Verification test plan}\label{sec:vtest}
+%=====================================================================
+\subsection{Existing tests (v0.2)}
+Sixteen automated tests run on every change. They fall into four kinds:
+\begin{enumerate}
+  \item \textbf{Hand calculations}: one complete case checked to $10^{-12}$.
+  \item \textbf{Exact limits}: the fluid-loop radiator reduces to the isothermal one; the
+        optimiser reproduces the closed-form optimum; the $T_s=0$ branch is exact.
+  \item \textbf{Independent numerics}: the radiator integral against SciPy adaptive
+        quadrature over ten sink temperatures.
+  \item \textbf{Conservation and invariants}: the energy-balance residual, linear scaling,
+        and the two-sided-panel rule (a regression test for problem report PR-001).
+\end{enumerate}
+
+\subsection{Planned additions}
+\begin{longtable}{>{\ttfamily}p{0.08\textwidth}p{0.84\textwidth}}
+\toprule
+ID & Planned verification activity \\
+\midrule
+\endhead
+VT-01 & Property-based tests (random valid inputs): energy balance closes; area falls as emissivity, effectiveness or radiator temperature rises; area scales linearly with heat load. \\
+VT-02 & Golden-file regression: freeze the outputs of all parity cases at each release; any change must be explained in the change log. \\
+VT-03 & Optimiser solution verification: show the optimum moves by less than its tolerance when the tolerance is halved. \\
+VT-04 & Series-truncation check: the 20-term series against 40 terms and quadrature across $a/T_\text{out}\in[0,0.5)$. \\
+VT-05 & Parity of the JavaScript engine extended to every preset and to error paths (same inputs rejected, same messages). \\
+VT-06 & Independent hand verification of the worked example by a second person, recorded with name and date. \\
+VT-07 & One test per input-validation rule (FR-11). \\
+\bottomrule
+\end{longtable}
+
+\subsection{Acceptance criteria}
+All tests pass on the supported Python versions; the parity check reports a maximum
+relative difference $\le10^{-9}$; \texttt{sync\_refs.py --check} passes; and the Theory PDF
+builds without undefined references.
+
+%=====================================================================
+\section{Validation plan}\label{sec:val}
+%=====================================================================
+\subsection{Intended use and required accuracy}
+Validation is always \emph{for} an intended use. For first-order trade studies, the
+proposed target is: reactor thermal power within $\pm5\,\%$ and radiator area within
+$\pm15\,\%$ of what measured hardware would need, with the uncertainty stated. These
+targets are proposals and must be confirmed by the intended user.
+
+\subsection{Validation hierarchy}
+A complete system has never been built, so validation proceeds from the bottom up:
+\begin{enumerate}
+  \item \textbf{Component level, power conversion.} Compare the efficiency model with
+        measured converter data, for example the Technology Demonstration Unit tests
+        \cite{briggs2016tdu}.
+  \item \textbf{Component level, heat rejection.} Compare the radiator model, including
+        panel effectiveness, with thermal-vacuum test data from radiator panels. Such data
+        still has to be identified. This is the most important gap, because the panel
+        effectiveness is currently calibrated on a design study, not on hardware.
+  \item \textbf{Integrated non-nuclear system.} Compare whole-system energy flows with
+        electrically heated system tests such as the TDU.
+  \item \textbf{System level.} Only design studies exist; these remain benchmarks.
+\end{enumerate}
+
+\subsection{First validation case (VC-01): TDU energy flows}
+The TDU tests report converter power, converter efficiency, net system power and system
+efficiency at nominal and maximum conditions \cite{briggs2016tdu}. A preliminary check at
+the nominal point shows the case is useful:
+\begin{itemize}
+  \item Converter: 8.9\,kW at 21.7\,\% implies a converter heat input of $8.9/0.217=41.0$\,kW.
+  \item Net 8.1\,kW at a system efficiency of 17.2\,\% implies a total heat input of
+        $8.1/0.172=47.1$\,kW.
+  \item The difference, about 13\,\% of the total, is heat that never reached the converter.
+        That is exactly what \tlecuil{}'s reactor heat-loss fraction (Theory Eq.~4.5)
+        represents.
+\end{itemize}
+This is a consistency check, not yet a validation. VC-01 will document the TDU test
+conditions, the measurement uncertainties from the source, and an a-priori \tlecuil{}
+prediction made \emph{before} comparing, and then report $E$ and $u_\text{val}$.
+
+%=====================================================================
+\section{Configuration management}\label{sec:cm}
+%=====================================================================
+\begin{itemize}
+  \item \textbf{Repository.} All code, tests, documents and records live in one Git
+        repository. The \texttt{main} branch is protected: changes arrive by pull
+        request, and each pull request must pass CI.
+  \item \textbf{Versions.} Semantic versioning (MAJOR.MINOR.PATCH). A change that alters any
+        numerical result increments at least MINOR and is described in
+        \texttt{CHANGELOG.md}.
+  \item \textbf{Baselines.} Each release is a signed Git tag. Its record lists the commit,
+        the Python and package versions, the test results, and the PDF built from that
+        commit.
+  \item \textbf{Environment.} Supported Python versions and package versions are listed in
+        \texttt{requirements.txt} and exercised by CI.
+  \item \textbf{Generated artefacts.} Benchmark tables and figures are generated by the
+        code and are never edited by hand.
+\end{itemize}
+
+%=====================================================================
+\section{Problem reporting and corrective action}\label{sec:prca}
+%=====================================================================
+Every error found after a result has been shared is recorded as a problem report (PR)
+using the repository's issue template. Each report records: what is wrong; which versions
+and results are affected; its impact (does it make past results non-conservative?); the
+cause; the fix; the regression test that now guards it; and whether users who received
+affected results were told.
+
+\begin{longtable}{>{\ttfamily}p{0.08\textwidth}p{0.42\textwidth}p{0.4\textwidth}}
+\toprule
+ID & Problem & Disposition \\
+\midrule
+\endhead
+PR-001 & v0.1 divided by the number of radiating sides twice; its reported ``emitting area'' was half the true radiating area for two-sided panels. Non-conservative. & Fixed in v0.2. Regression test \texttt{two\_sided\_\allowbreak{}panel\_\allowbreak{}\ldots}. User informed (revision history in Theory). \\
+PR-002 & The closed-form radiator integral lost precision for sink temperatures near 0\,K and could return a negative area at $10^{-3}$\,K. Found by independent review. & Fixed in v0.2 (series branch). Test \texttt{small\_and\_\allowbreak{}large\_\allowbreak{}sinks\_\allowbreak{}\ldots}. No published result affected (all used $T_s\ge185$\,K). \\
+\bottomrule
+\end{longtable}
+
+%=====================================================================
+\section{Reviews}\label{sec:reviews}
+%=====================================================================
+\begin{itemize}
+  \item \textbf{Independent technical review} of each release that changes the physics,
+        by someone who did not write the change. The record keeps the reviewer, date,
+        scope, findings and their disposition.
+  \item \textbf{IR-001 (v0.2).} Independent review of the equations, the code--document
+        consistency, the benchmark inputs against primary sources, and the citations.
+        Result: no critical findings. Four major findings (overstated independence of the
+        benchmarks, an undisclosed interpretation of a 2\,kWe load, PR-002, and an
+        unsupported claim) and fifteen minor findings, all dispositioned in v0.2.
+\end{itemize}
+
+%=====================================================================
+\section{Documentation and records}\label{sec:records}
+%=====================================================================
+\begin{center}
+\begin{tabularx}{\textwidth}{lL}
+\toprule
+Document & Where \\
+\midrule
+SQA and V\&V plan & This document \\
+Software requirements & Section~\ref{sec:req} \\
+Design and theory & \texttt{docs/tlecuil\_theory.tex} \\
+Traceability & Section~\ref{sec:rtm}; \texttt{sync\_refs.py} \\
+Test results & CI logs per commit; release test record \\
+Benchmark report & Theory Sec.~11; \texttt{benchmark\_results.json} \\
+Validation reports & To be written per case (VC-01 first) \\
+User guide & \texttt{README.md}; Theory worked example \\
+Problem reports, reviews & Repository issues; Sections~\ref{sec:prca}--\ref{sec:reviews} \\
+Change history & \texttt{CHANGELOG.md}; Git history \\
+\bottomrule
+\end{tabularx}
+\end{center}
+Records are kept for the life of the software and are never rewritten. A correction is
+made by a new entry that refers to the old one.
+
+%=====================================================================
+\section{Roadmap to a qualifiable baseline}
+%=====================================================================
+\begin{enumerate}
+  \item \textbf{v0.2 (now):} requirements, traceability, 16 tests, CI, problem reports,
+        one independent review.
+  \item \textbf{v0.3:} VT-01 to VT-07; golden-file regression; first signed release record.
+  \item \textbf{v0.4:} VC-01 validation report (TDU); search for radiator-panel test data.
+  \item \textbf{v1.0:} a frozen baseline with a complete record set, ready for a quality
+        program to review for acceptance. New modules (mass, shielding, efficiency maps)
+        enter only with their own requirements, tests and validation cases.
+\end{enumerate}
+
+\setcounter{biburlnumpenalty}{9000}\setcounter{biburllcpenalty}{7000}\setcounter{biburlucpenalty}{8000}
+\printbibliography[heading=bibintoc]
+\end{document}

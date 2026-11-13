@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use TLECUIL, please cite it as below."
+title: "TLECUIL: A First-Order Fission Surface Power Sizer"
+version: 0.2.0
+date-released: 2026-11-11
+authors:
+  - family-names: Strong
+    given-names: Ira
+license: BSD-3-Clause
+keywords:
+  - fission surface power
+  - space nuclear power
+  - radiator sizing
+  - verification and validation

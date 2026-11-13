@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TLECUIL — First-Order Fission Surface Power Sizer</title>
+<style>
+:root{
+  color-scheme: light;
+  --surface-0:#f4f3ef; --surface-1:#fcfcfb; --border:#dedcd5;
+  --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#7c7a74;
+  --series-1:#2a78d6; --series-2:#eb6834; --series-3:#1baf7a;
+  --grid:#e8e6e0; --accent:#2a78d6; --bad:#c42b2b; --bad-bg:#fbeaea;
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme: dark;
+    --surface-0:#121211; --surface-1:#1a1a19; --border:#33332f;
+    --text-primary:#f0efec; --text-secondary:#c3c2b7; --text-muted:#8f8d85;
+    --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
+    --grid:#2a2a27; --accent:#3987e5; --bad:#ff7b7b; --bad-bg:#3a1c1c;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--surface-0);color:var(--text-primary)}
+header{padding:20px 24px 8px}
+h1{font-size:20px;margin:0 0 4px}
+header p{margin:0;color:var(--text-secondary);max-width:900px}
+.wrap{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:16px;padding:16px 24px 32px}
+@media (max-width:900px){.wrap{grid-template-columns:1fr}.tiles{grid-template-columns:repeat(2,1fr)}}
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.inputs .card{margin-bottom:12px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-secondary);margin:0 0 10px}
+.field{margin-bottom:10px}
+.field label{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--text-secondary)}
+.field .row{display:flex;gap:8px;align-items:center}
+.field input[type=range]{flex:1;accent-color:var(--accent)}
+.field input[type=number]{width:92px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;background:var(--surface-0);color:var(--text-primary);font:inherit;text-align:right}
+.hint{font-size:11.5px;color:var(--text-muted);margin-top:2px}
+.seg{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:10px}
+.seg button{flex:1;padding:6px;border:0;background:transparent;color:var(--text-secondary);font:inherit;cursor:pointer}
+.seg button.on{background:var(--accent);color:#fff}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.tile{background:var(--surface-1);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.tile .k{font-size:12px;color:var(--text-secondary)}
+.tile .v{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.tile .s{font-size:11.5px;color:var(--text-muted)}
+.err{display:none;background:var(--bad-bg);color:var(--bad);border:1px solid var(--bad);border-radius:8px;padding:10px 12px;margin-bottom:12px}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media (max-width:1200px){.charts{grid-template-columns:1fr}}
+.chart{position:relative}
+.chart svg{width:100%;height:auto;display:block}
+.chart .sub{font-size:12px;color:var(--text-muted);margin:-6px 0 6px}
+.tip{position:absolute;pointer-events:none;background:var(--surface-1);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none;white-space:nowrap;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+td{padding:4px 6px;border-bottom:1px solid var(--grid)}
+td:last-child{text-align:right}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn{padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface-0);color:var(--text-primary);font:inherit;cursor:pointer}
+.note{font-size:12px;color:var(--text-muted);margin-top:8px}
+svg text{fill:var(--text-secondary);font-size:11px}
+</style>
+</head>
+<body>
+<header>
+  <h1>TLECUIL <span style="font-weight:400;color:var(--text-secondary)">· First-Order Fission Surface Power Sizer</span></h1>
+  <p><em>Tlecuilli</em> (Nahuatl): the three-stone hearth. This page runs the same equations as <code>tlecuil.py</code> (v0.2.0), and a parity check confirms both give identical results. There is no power limit: type any value in a number box. Areas are total radiating area (both faces) including margin, the convention NASA uses. Presets load published NASA design points and show the published values for comparison.</p>
+</header>
+
+<div class="wrap">
+<div class="inputs"><div class="card"><h2>Preset</h2><select id="preset" style="width:100%;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--surface-0);color:var(--text-primary);font:inherit"></select><div class="hint" id="presetNote" style="margin-top:6px"></div></div><div id="inputs"></div></div>
+
+<div>
+  <div class="err" id="err"></div>
+  <div class="tiles" id="tiles"></div>
+
+  <div class="card" style="margin-bottom:12px">
+    <h2>Where the reactor's heat goes</h2>
+    <svg id="flow" viewBox="0 0 800 46" preserveAspectRatio="none" style="width:100%;height:46px"></svg>
+    <div class="legend" id="flowLegend"></div>
+  </div>
+
+  <div class="charts">
+    <div class="card chart" id="c1wrap">
+      <h2>Radiator area vs cold-end temperature</h2>
+      <div class="sub" id="c1sub"></div>
+      <svg id="c1" viewBox="0 0 520 300"></svg>
+      <div class="tip" id="tip1"></div>
+    </div>
+    <div class="card chart" id="c2wrap">
+      <h2>Reactor thermal power vs cold-end temperature</h2>
+      <div class="sub">Higher T<sub>c</sub> shrinks the radiator but lowers efficiency, so the reactor must make more heat</div>
+      <svg id="c2" viewBox="0 0 520 300"></svg>
+      <div class="tip" id="tip2"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>All results</h2>
+    <table id="table"></table>
+    <div class="btns">
+      <button class="btn" id="copyPy">Copy inputs as Python</button>
+      <button class="btn" id="copyRes">Copy results</button>
+      <button class="btn" id="reset">Reset defaults</button>
+      <span class="note" id="copyMsg"></span>
+    </div>
+    <p class="note">Not modeled: component masses, shielding and dose, view factors and solar/regolith loading, Mars convection and dust, transients, size-dependent converter efficiency. Minimum radiator area is not minimum system mass. Comparisons with published values are model-to-model, not hardware validation.</p>
+  </div>
+</div>
+</div>
+
+<!-- ===================== ENGINE (mirrors tlecuil.py) ===================== -->
+<script id="engine">
+// ENGINE-START
+const FSP = (() => {
+  // Mirrors tlecuil.py v0.2.0. Equation numbers refer to docs/tlecuil_theory.pdf.
+  const SIGMA = 5.670374419e-8, NA = 6.02214076e23, MEV = 1.602176634e-13,
+        M235 = 235.0439299, YEAR = 365.25 * 86400;      // CODATA 2018
+
+  const DEFAULTS = {
+    delivered_power_kwe: 40, pmad_efficiency: 0.90, parasitic_fraction: 0.0, fixed_parasitic_kwe: 0.0,
+    efficiency_mode: "carnot", conversion_efficiency: 0.26, fraction_of_carnot: 0.55,
+    hot_temperature_k: 850, cold_temperature_k: 425, reactor_heat_loss_fraction: 0.0,
+    hx_delta_t_k: 5, radiator_delta_t_k: 30, sink_temperature_k: 250, emissivity: 0.85,
+    radiating_sides: 2, panel_effectiveness: 0.76, area_margin: 0.10,
+    electronics_radiator_temperature_k: 333, full_power_years: 10, energy_per_fission_mev: 200,
+  };
+
+  function validate(i) {
+    const need = (c, m) => { if (!c) throw new Error(m); };
+    need(i.delivered_power_kwe > 0, "Delivered power must be positive.");
+    need(i.pmad_efficiency > 0 && i.pmad_efficiency <= 1, "PMAD efficiency must be in (0, 1].");
+    need(i.parasitic_fraction >= 0 && i.parasitic_fraction < 1, "Parasitic fraction must be in [0, 1).");
+    need(i.fixed_parasitic_kwe >= 0, "Fixed parasitic load cannot be negative.");
+    need(i.reactor_heat_loss_fraction >= 0 && i.reactor_heat_loss_fraction < 1, "Reactor heat-loss fraction must be in [0, 1).");
+    need(i.hot_temperature_k > i.cold_temperature_k && i.cold_temperature_k > 0, "Need hot temperature > cold temperature > 0 K.");
+    const carnot = 1 - i.cold_temperature_k / i.hot_temperature_k;
+    if (i.efficiency_mode === "fixed") {
+      need(i.conversion_efficiency > 0 && i.conversion_efficiency < 1, "Conversion efficiency must be in (0, 1).");
+      need(i.conversion_efficiency <= carnot,
+        `Fixed efficiency ${(i.conversion_efficiency * 100).toFixed(1)}% exceeds the Carnot limit ${(carnot * 100).toFixed(1)}% for these temperatures (second law).`);
+    } else {
+      need(i.fraction_of_carnot > 0 && i.fraction_of_carnot <= 1, "Fraction of Carnot must be in (0, 1].");
+    }
+    need(i.emissivity > 0 && i.emissivity <= 1, "Emissivity must be in (0, 1].");
+    need(i.radiating_sides === 1 || i.radiating_sides === 2, "Radiating sides must be 1 or 2.");
+    need(i.panel_effectiveness > 0 && i.panel_effectiveness <= 1, "Panel effectiveness must be in (0, 1].");
+    need(i.area_margin >= 0, "Area margin cannot be negative.");
+    need(i.hx_delta_t_k >= 0 && i.radiator_delta_t_k >= 0, "Temperature drops cannot be negative.");
+    need(i.sink_temperature_k >= 0, "Sink temperature cannot be negative.");
+    const tout = i.cold_temperature_k - i.hx_delta_t_k - i.radiator_delta_t_k;
+    need(tout > i.sink_temperature_k, "Radiator outlet must stay hotter than the sink, or it cannot reject heat.");
+    need(i.electronics_radiator_temperature_k > i.sink_temperature_k, "Electronics radiator must be hotter than the sink.");
+    need(i.full_power_years >= 0, "Mission life cannot be negative.");
+    need(i.energy_per_fission_mev > 0, "Energy per fission must be positive.");
+  }
+
+  const eta = i => i.efficiency_mode === "fixed" ? i.conversion_efficiency
+                 : i.fraction_of_carnot * (1 - i.cold_temperature_k / i.hot_temperature_k);   // eq. 4.4 [eq:fc]
+
+  function F(t, a) {                                                    // eq. 5.8 [eq:antider]
+    if (a < 1e-9) return -1 / (3 * t ** 3);
+    return Math.log((t - a) / (t + a)) / (4 * a ** 3) - Math.atan(t / a) / (2 * a ** 3);
+  }
+
+  function integralInvT4(tin, tout, a) {                               // eqs. 5.8-5.9 [eq:antider, eq:series]
+    if (a < 0.5 * tout) {                    // series avoids round-off for small sinks
+      let total = 0, x = 1;
+      for (let k = 0; k < 20; k++) {
+        const n = 4 * k + 3;
+        total += x / n * (tout ** -n - tin ** -n);
+        x *= a ** 4;
+      }
+      return total;
+    }
+    return F(tin, a) - F(tout, a);
+  }
+
+  function radiatingArea(q, tin, tout, ts, eps, etap) {                 // eqs. 5.5-5.7 [eq:aiso, eq:afluid], no margin
+    if (q <= 0) return 0;
+    const k = etap * eps * SIGMA;
+    if (tin - tout < 1e-6) return q / (k * (tin ** 4 - ts ** 4));
+    return (q / (tin - tout)) * integralInvT4(tin, tout, ts) / k;
+  }
+
+  function size(i) {
+    validate(i);
+    const pConv = (i.delivered_power_kwe / i.pmad_efficiency + i.fixed_parasitic_kwe) / (1 - i.parasitic_fraction); // eq. 3.2 [eq:pconv]
+    const pPar = i.parasitic_fraction * pConv + i.fixed_parasitic_kwe;  // eq. 3.1 [eq:ppar]
+    const pmadLoss = (pConv - pPar) - i.delivered_power_kwe;           // eq. 3.3 [eq:lpmad]
+    const e = eta(i);
+    const qIn = pConv / e;                                              // eq. 4.2 [eq:qin]
+    const qConv = qIn - pConv;
+    const pTh = qIn / (1 - i.reactor_heat_loss_fraction);              // eq. 4.5 [eq:loss]
+    const qLoss = pTh - qIn;
+    const qElec = pmadLoss + pPar;                                      // eq. 6.1 [eq:qelec]
+    const tin = i.cold_temperature_k - i.hx_delta_t_k;                  // eq. 5.4 [eq:tin]
+    const tout = tin - i.radiator_delta_t_k;
+    const m = 1 + i.area_margin;
+    const aMain = m * radiatingArea(qConv * 1e3, tin, tout, i.sink_temperature_k, i.emissivity, i.panel_effectiveness);
+    const te = i.electronics_radiator_temperature_k;
+    const aElec = m * radiatingArea(qElec * 1e3, te, te, i.sink_temperature_k, i.emissivity, i.panel_effectiveness);
+    const nf = pTh * 1e3 / (i.energy_per_fission_mev * MEV) * i.full_power_years * YEAR;  // eq. 7.1 [eq:mf]
+    return {
+      conversion_efficiency: e,
+      carnot_efficiency: 1 - i.cold_temperature_k / i.hot_temperature_k,
+      converter_output_kwe: pConv, parasitic_load_kwe: pPar, pmad_loss_kw: pmadLoss,
+      converter_heat_input_kwt: qIn, reactor_thermal_kwt: pTh, reactor_heat_loss_kwt: qLoss,
+      converter_heat_rejection_kwt: qConv, electronics_heat_kwt: qElec,
+      system_efficiency: i.delivered_power_kwe / pTh,
+      radiator_inlet_k: tin, radiator_outlet_k: tout,
+      radiator_area_m2: aMain, radiator_planform_m2: aMain / i.radiating_sides,
+      electronics_radiator_area_m2: aElec,
+      u235_fissioned_kg: nf / NA * M235 / 1e3,
+      energy_balance_error_kw: pTh - (i.delivered_power_kwe + qConv + qElec + qLoss),   // eq. 6.2 [eq:balance]
+    };
+  }
+
+  function optimumTc(i, tol = 1e-3) {                                   // Sec. 8 [sec:opt]
+    const lo = i.sink_temperature_k + i.hx_delta_t_k + i.radiator_delta_t_k + 1;
+    const hi = i.hot_temperature_k - 1;
+    const area = tc => size({ ...i, cold_temperature_k: tc }).radiator_area_m2;
+    const g = (Math.sqrt(5) - 1) / 2;
+    let a = lo, b = hi, c = b - g * (b - a), d = a + g * (b - a), fc = area(c), fd = area(d);
+    while (b - a > tol) {
+      if (fc < fd) { b = d; d = c; fd = fc; c = b - g * (b - a); fc = area(c); }
+      else { a = c; c = d; fc = fd; d = a + g * (b - a); fd = area(d); }
+    }
+    const tc = (a + b) / 2;
+    return [tc, area(tc)];
+  }
+
+  return { DEFAULTS, size, optimumTc, radiatingArea };
+})();
+if (typeof module !== "undefined") module.exports = FSP;
+// ENGINE-END
+</script>
+
+<!-- ===================== USER INTERFACE ===================== -->
+<script>
+const FIELDS = [
+  { group: "Power demand & electrical chain", items: [
+    { key: "delivered_power_kwe", label: "Delivered power", unit: "kWe", min: 1, max: 250, step: 1, open: true,
+      hint: "Slider runs 1–250; type any value (e.g. 1000) in the box. There is no cap." },
+    { key: "pmad_efficiency", label: "PMAD efficiency", unit: "", min: 0.5, max: 1, step: 0.01, hint: "≈0.90 Brayton, 0.83 Stirling (Mason 2025)" },
+    { key: "parasitic_fraction", label: "Proportional parasitic fraction", unit: "", min: 0, max: 0.3, step: 0.01, hint: "Loads that scale with power, e.g. pumps" },
+    { key: "fixed_parasitic_kwe", label: "Fixed parasitic load", unit: "kWe", min: 0, max: 10, step: 0.1, open: true, hint: "Housekeeping; up to 2 kWe in Mason 2025" },
+  ]},
+  { group: "Power conversion", mode: true, items: [
+    { key: "conversion_efficiency", label: "Conversion efficiency η", unit: "", min: 0.05, max: 0.6, step: 0.001, only: "fixed" },
+    { key: "fraction_of_carnot", label: "Fraction of Carnot f", unit: "", min: 0.2, max: 1, step: 0.01, only: "carnot", hint: "η = f·(1 − Tc/Th). Published designs imply 0.31 (Brayton) to 0.57 (Stirling)" },
+    { key: "hot_temperature_k", label: "Hot-end temperature Th", unit: "K", min: 600, max: 1400, step: 1 },
+    { key: "cold_temperature_k", label: "Cold-end temperature Tc", unit: "K", min: 250, max: 900, step: 1 },
+    { key: "reactor_heat_loss_fraction", label: "Reactor/piping heat loss", unit: "", min: 0, max: 0.3, step: 0.01, hint: "Heat that never reaches the converter" },
+  ]},
+  { group: "Main radiator", items: [
+    { key: "sink_temperature_k", label: "Effective sink temperature", unit: "K", min: 0, max: 350, step: 1, hint: "Moon: ~100–320 K by site/time; Mars: ~175–250 K" },
+    { key: "hx_delta_t_k", label: "Cold end → radiator inlet drop", unit: "K", min: 0, max: 60, step: 1 },
+    { key: "radiator_delta_t_k", label: "Radiator inlet → outlet drop", unit: "K", min: 0, max: 200, step: 1, hint: "0 = isothermal (heat pipes); >0 = pumped fluid loop" },
+    { key: "emissivity", label: "Emissivity ε", unit: "", min: 0.5, max: 1, step: 0.01 },
+    { key: "panel_effectiveness", label: "Panel effectiveness ηp", unit: "", min: 0.5, max: 1, step: 0.01, hint: "1 = ideal panel. 0.76 is calibrated on NASA's 2010 design" },
+    { key: "area_margin", label: "Area margin", unit: "", min: 0, max: 0.5, step: 0.01, hint: "NASA uses 0.10" },
+    { key: "radiating_sides", label: "Radiating sides", unit: "", min: 1, max: 2, step: 1, hint: "Sets planform only: planform = area ÷ sides" },
+  ]},
+  { group: "Electronics & fuel", items: [
+    { key: "electronics_radiator_temperature_k", label: "Electronics radiator temperature", unit: "K", min: 280, max: 450, step: 1 },
+    { key: "full_power_years", label: "Full-power years", unit: "yr", min: 0, max: 30, step: 0.5 },
+  ]},
+];
+
+// Presets: published NASA design points (see benchmarks.py and Theory Sec. 11 [sec:bench]).
+const PRESETS = {
+  default: { name: "Generic 40 kWe lunar (defaults)", set: {}, note: "Illustrative defaults drawn from the published range. Not a specific NASA design.", pub: null },
+  fsp2010: { name: "NASA 2010 reference, Stirling, 40 kWe",
+    set: { pmad_efficiency: 40 / 43, fixed_parasitic_kwe: 5, efficiency_mode: "fixed", conversion_efficiency: 0.26,
+           hot_temperature_k: 778, cold_temperature_k: 425, hx_delta_t_k: 5, radiator_delta_t_k: 30, sink_temperature_k: 250, full_power_years: 8 },
+    note: "NASA/TM-2010-216772; Mason & Poston 2011. 48 kWe gross: 3 kWe electrical losses + 5 kWe parasitics. This is the case ηp was calibrated on.",
+    pub: { reactor: 186, area: 185 } },
+  grdStirling: { name: "NASA 2025 GRD, heat-pipe + Stirling, 40 kWe",
+    set: { pmad_efficiency: 0.83, fixed_parasitic_kwe: 2, efficiency_mode: "fixed", conversion_efficiency: 50.4 / 175,
+           hot_temperature_k: 1050, cold_temperature_k: 433, hx_delta_t_k: 0, radiator_delta_t_k: 30, sink_temperature_k: 270 },
+    note: "Mason et al. 2025. Tc set to the radiator inlet (433 K; the radiator runs 403–433 K). Independent of the calibration.",
+    pub: { reactor: 175, area: 140 } },
+  grdBrayton: { name: "NASA 2025 GRD, gas-cooled + Brayton, 40 kWe",
+    set: { pmad_efficiency: 0.90, fixed_parasitic_kwe: 2, efficiency_mode: "fixed", conversion_efficiency: 46.7 / 230,
+           hot_temperature_k: 1100, cold_temperature_k: 504, hx_delta_t_k: 0, radiator_delta_t_k: 125, sink_temperature_k: 270 },
+    note: "Mason et al. 2025. Brayton rejects heat across 504 → 379 K, so Tc is set to the radiator inlet. Independent of the calibration.",
+    pub: { reactor: 230, area: 180 } },
+  brayton100: { name: "100 kWe Brayton (scaled 2025 GRD)",
+    set: { delivered_power_kwe: 100, pmad_efficiency: 0.90, fixed_parasitic_kwe: 2, efficiency_mode: "fixed", conversion_efficiency: 0.219,
+           hot_temperature_k: 1100, cold_temperature_k: 504, hx_delta_t_k: 0, radiator_delta_t_k: 125, sink_temperature_k: 270 },
+    note: "Mason 2025 Table V at 100 kWe. η = 0.219 is what NASA's numbers imply at this size (0.203 at 40 kWe). NASA's current solicitation is ≥100 kWe Brayton.",
+    pub: { reactor: 517, area: 380 } },
+  mars: { name: "Generic 40 kWe on Mars (radiation only)",
+    set: { sink_temperature_k: 210 },
+    note: "Sink 210 K, mid-range of the 175–250 K Mars estimate (Perez-Davis et al. 1992). Convection to the CO₂ atmosphere is not modeled, so areas are conservative. Dust lowers ε over time.",
+    pub: null },
+};
+
+for (const k of ["fsp2010", "grdStirling", "grdBrayton", "brayton100"])
+  PRESETS[k].note += " Presets run the full system (computed heat load), so differences can differ by a few percent from the radiator-only benchmark table in the PDF.";
+
+let state = { ...FSP.DEFAULTS };
+let currentPreset = "default";
+const $ = id => document.getElementById(id);
+
+function buildInputs() {
+  const root = $("inputs");
+  root.innerHTML = "";
+  for (const g of FIELDS) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `<h2>${g.group}</h2>`;
+    if (g.mode) {
+      const seg = document.createElement("div");
+      seg.className = "seg";
+      for (const [m, txt] of [["carnot", "Fraction of Carnot"], ["fixed", "Fixed η"]]) {
+        const b = document.createElement("button");
+        b.textContent = txt;
+        b.className = state.efficiency_mode === m ? "on" : "";
+        b.onclick = () => { state.efficiency_mode = m; buildInputs(); update(); };
+        seg.appendChild(b);
+      }
+      card.appendChild(seg);
+    }
+    for (const f of g.items) {
+      if (f.only && f.only !== state.efficiency_mode) continue;
+      const d = document.createElement("div");
+      d.className = "field";
+      d.innerHTML = `<label><span>${f.label}</span><span>${f.unit}</span></label>
+        <div class="row"><input type="range" min="${f.min}" max="${f.max}" step="${f.step}">
+        <input type="number" step="${f.step}" ${f.open ? 'min="0"' : `min="${f.min}" max="${f.max}"`}></div>
+        ${f.hint ? `<div class="hint">${f.hint}</div>` : ""}`;
+      const [r, n] = d.querySelectorAll("input");
+      r.value = state[f.key]; n.value = Math.round(state[f.key] * 1e4) / 1e4;
+      r.oninput = () => { n.value = r.value; state[f.key] = +r.value; update(); };
+      n.oninput = () => {
+        const v = parseFloat(n.value);
+        if (!isFinite(v)) return;
+        state[f.key] = f.key === "radiating_sides" ? Math.round(v) : v;
+        r.value = Math.min(Math.max(v, f.min), f.max);
+        update();
+      };
+      card.appendChild(d);
+    }
+    root.appendChild(card);
+  }
+}
+
+const fmt = (v, d = 1) => v.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
+const pct = v => (v * 100).toFixed(1) + "%";
+
+function update() {
+  let r;
+  try { r = FSP.size(state); $("err").style.display = "none"; }
+  catch (e) { $("err").textContent = e.message; $("err").style.display = "block"; return; }
+
+  const opt = state.efficiency_mode === "carnot" ? FSP.optimumTc(state) : null;
+  const pub = PRESETS[currentPreset].pub;
+  const cmp = (v, p) => p ? ` · published ${p} (${((v - p) / p * 100 >= 0 ? "+" : "")}${((v - p) / p * 100).toFixed(1)}%)` : "";
+  const tiles = [
+    ["Reactor thermal power", fmt(r.reactor_thermal_kwt) + " kWt", `${fmt(state.delivered_power_kwe, 0)} kWe delivered${cmp(r.reactor_thermal_kwt, pub && pub.reactor)}`],
+    ["Main radiator, radiating area", fmt(r.radiator_area_m2) + " m²", `planform ${fmt(r.radiator_planform_m2)} m²${cmp(r.radiator_area_m2, pub && pub.area)}`],
+    ["Conversion efficiency", pct(r.conversion_efficiency), `Carnot limit ${pct(r.carnot_efficiency)}`],
+    ["System efficiency", pct(r.system_efficiency), "bus power ÷ reactor heat"],
+    ["Electronics radiator", fmt(r.electronics_radiator_area_m2) + " m²", `${fmt(r.electronics_heat_kwt, 2)} kW at ${state.electronics_radiator_temperature_k} K`],
+    ["U-235 fissioned", fmt(r.u235_fissioned_kg, 2) + " kg", `over ${state.full_power_years} full-power years`],
+  ];
+  $("tiles").innerHTML = tiles.map(([k, v, s]) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("");
+
+  drawFlow(r);
+  drawTcCharts(opt);
+
+  const rows = [
+    ["Converter output (gross)", fmt(r.converter_output_kwe, 2) + " kWe"],
+    ["Parasitic load (proportional + fixed)", fmt(r.parasitic_load_kwe, 2) + " kWe"],
+    ["PMAD loss", fmt(r.pmad_loss_kw, 2) + " kW"],
+    ["Heat into converter", fmt(r.converter_heat_input_kwt, 2) + " kWt"],
+    ["Reactor thermal power", fmt(r.reactor_thermal_kwt, 2) + " kWt"],
+    ["Reactor/piping heat loss", fmt(r.reactor_heat_loss_kwt, 2) + " kW"],
+    ["Main radiator heat load", fmt(r.converter_heat_rejection_kwt, 2) + " kW"],
+    ["Electronics heat", fmt(r.electronics_heat_kwt, 2) + " kW"],
+    ["Radiator inlet / outlet", `${fmt(r.radiator_inlet_k, 0)} / ${fmt(r.radiator_outlet_k, 0)} K`],
+    ["Main radiator radiating area (incl. margin)", fmt(r.radiator_area_m2, 2) + " m²"],
+    ["Main radiator panel planform", fmt(r.radiator_planform_m2, 2) + " m²"],
+    ["Electronics radiator area (incl. margin)", fmt(r.electronics_radiator_area_m2, 2) + " m²"],
+    ["U-235 fissioned", fmt(r.u235_fissioned_kg, 3) + " kg"],
+  ];
+  if (opt) rows.push(["Minimum-area cold-end temperature", `${fmt(opt[0], 1)} K → ${fmt(opt[1], 1)} m²`]);
+  rows.push(["Energy balance error", r.energy_balance_error_kw.toExponential(1) + " kW"]);
+  $("table").innerHTML = rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("");
+  window._last = { r, rows };
+}
+
+function drawFlow(r) {
+  const parts = [
+    ["Delivered to users", state.delivered_power_kwe, "var(--series-1)"],
+    ["Converter waste heat (main radiator)", r.converter_heat_rejection_kwt, "var(--series-2)"],
+    ["Electronics heat (PMAD + parasitic)", r.electronics_heat_kwt, "var(--series-3)"],
+    ["Reactor/piping loss", r.reactor_heat_loss_kwt, "var(--text-muted)"],
+  ].filter(p => p[1] > 1e-9);
+  const total = r.reactor_thermal_kwt, W = 800;
+  let x = 0, svg = "";
+  for (const [name, v, c] of parts) {
+    const w = v / total * W;
+    if (w > 0.5) svg += `<rect x="${x + (x ? 1 : 0)}" y="4" width="${Math.max(w - (x ? 1 : 0), 0.5)}" height="38" rx="3" fill="${c}"><title>${name}: ${fmt(v)} kW (${pct(v / total)})</title></rect>`;
+    x += w;
+  }
+  $("flow").innerHTML = svg;
+  $("flowLegend").innerHTML = parts.map(([n, v, c]) => `<span><i style="background:${c}"></i>${n}: ${fmt(v)} kW (${pct(v / total)})</span>`).join("");
+}
+
+function niceTicks(lo, hi, n = 5) {
+  const step0 = (hi - lo) / n, mag = 10 ** Math.floor(Math.log10(step0));
+  const step = [1, 2, 5, 10].map(m => m * mag).find(s => s >= step0);
+  const out = [];
+  for (let t = Math.ceil(lo / step) * step; t <= hi + 1e-9; t += step) out.push(t);
+  return out;
+}
+
+function lineChart(svgId, tipId, xs, ys, opts) {
+  const W = 520, H = 300, m = { l: 58, r: 14, t: 12, b: 40 };
+  const pw = W - m.l - m.r, ph = H - m.t - m.b;
+  const xmin = xs[0], xmax = xs[xs.length - 1];
+  const ly = ys.map(Math.log10);
+  const ymin = Math.floor(Math.min(...ly)), ymax = Math.ceil(Math.max(...ly));
+  const X = x => m.l + (x - xmin) / (xmax - xmin) * pw;
+  const Y = y => m.t + ph - (Math.log10(y) - ymin) / (ymax - ymin || 1) * ph;
+  let s = "";
+  for (let e = ymin; e <= ymax; e++) {
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(10 ** e)}" y2="${Y(10 ** e)}" stroke="var(--grid)"/>`;
+    s += `<text x="${m.l - 6}" y="${Y(10 ** e) + 4}" text-anchor="end">${(10 ** e).toLocaleString()}</text>`;
+  }
+  for (const t of niceTicks(xmin, xmax)) s += `<text x="${X(t)}" y="${H - m.b + 16}" text-anchor="middle">${t}</text>`;
+  s += `<text x="${m.l + pw / 2}" y="${H - 6}" text-anchor="middle">${opts.xlabel}</text>`;
+  s += `<text transform="translate(13 ${m.t + ph / 2}) rotate(-90)" text-anchor="middle">${opts.ylabel} (log scale)</text>`;
+  s += `<line x1="${m.l}" x2="${W - m.r}" y1="${m.t + ph}" y2="${m.t + ph}" stroke="var(--text-muted)"/>`;
+  if (opts.vline) {
+    s += `<line x1="${X(opts.vline.x)}" x2="${X(opts.vline.x)}" y1="${m.t}" y2="${m.t + ph}" stroke="var(--text-muted)" stroke-dasharray="4 4"/>`;
+    s += `<text x="${X(opts.vline.x) + 5}" y="${m.t + 12}">${opts.vline.label}</text>`;
+  }
+  s += `<path d="${xs.map((x, k) => (k ? "L" : "M") + X(x).toFixed(1) + " " + Y(ys[k]).toFixed(1)).join("")}" fill="none" stroke="var(--series-1)" stroke-width="2"/>`;
+  if (opts.point) s += `<circle cx="${X(opts.point.x)}" cy="${Y(opts.point.y)}" r="5" fill="var(--series-2)" stroke="var(--surface-1)" stroke-width="2"/>
+     <text x="${X(opts.point.x) + 8}" y="${Y(opts.point.y) - 8}">current</text>`;
+  s += `<line id="${svgId}x" y1="${m.t}" y2="${m.t + ph}" stroke="var(--text-muted)" visibility="hidden"/>
+        <circle id="${svgId}d" r="4" fill="var(--series-1)" visibility="hidden"/>
+        <rect x="${m.l}" y="${m.t}" width="${pw}" height="${ph}" fill="transparent" id="${svgId}hit"/>`;
+  const svg = $(svgId);
+  svg.innerHTML = s;
+  const tip = $(tipId), hit = $(svgId + "hit"), cx = $(svgId + "x"), dot = $(svgId + "d");
+  hit.onmousemove = ev => {
+    const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const xv = xmin + (p.x - m.l) / pw * (xmax - xmin);
+    let k = 0; while (k < xs.length - 1 && xs[k] < xv) k++;
+    cx.setAttribute("x1", X(xs[k])); cx.setAttribute("x2", X(xs[k])); cx.setAttribute("visibility", "visible");
+    dot.setAttribute("cx", X(xs[k])); dot.setAttribute("cy", Y(ys[k])); dot.setAttribute("visibility", "visible");
+    tip.innerHTML = opts.tip(xs[k], ys[k]);
+    const box = svg.getBoundingClientRect(), wrap = svg.parentElement.getBoundingClientRect();
+    const left = ev.clientX - wrap.left + 12;
+    tip.style.left = Math.min(left, wrap.width - 160) + "px";
+    tip.style.top = (ev.clientY - wrap.top - 10) + "px";
+    tip.style.display = "block";
+  };
+  hit.onmouseleave = () => { tip.style.display = "none"; cx.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); };
+}
+
+function drawTcCharts(opt) {
+  const lo = state.sink_temperature_k + state.hx_delta_t_k + state.radiator_delta_t_k + 5;
+  const hi = state.hot_temperature_k - 5;
+  const xs = [], a = [], p = [], e = [];
+  for (let k = 0; k <= 200; k++) {
+    const tc = lo + (hi - lo) * k / 200;
+    try {
+      const r = FSP.size({ ...state, cold_temperature_k: tc });
+      xs.push(+tc.toFixed(1)); a.push(r.radiator_area_m2); p.push(r.reactor_thermal_kwt); e.push(r.conversion_efficiency);
+    } catch (_) {}
+  }
+  if (xs.length < 2) return;
+  const cur = FSP.size(state);
+  const fixed = state.efficiency_mode === "fixed";
+  $("c1sub").textContent = fixed
+    ? "Fixed-η mode: efficiency does not change with Tc, so area only falls as Tc rises. Switch to Fraction of Carnot to see the trade."
+    : `Minimum area ${fmt(opt[1])} m² at Tc = ${fmt(opt[0], 0)} K, where η is only ${pct(FSP.size({ ...state, cold_temperature_k: opt[0] }).conversion_efficiency)}`;
+  const tipFn = idx => (x, y) => {
+    const k = xs.indexOf(x);
+    return `T<sub>c</sub> ${x} K<br>area ${fmt(a[k])} m²<br>reactor ${fmt(p[k])} kWt<br>η ${pct(e[k])}`;
+  };
+  lineChart("c1", "tip1", xs, a, {
+    xlabel: "Converter cold-end temperature Tc (K)", ylabel: "Radiating area, m²",
+    point: { x: state.cold_temperature_k, y: cur.radiator_area_m2 },
+    vline: opt ? { x: opt[0], label: "min area" } : null, tip: tipFn(0),
+  });
+  lineChart("c2", "tip2", xs, p, {
+    xlabel: "Converter cold-end temperature Tc (K)", ylabel: "Reactor power, kWt",
+    point: { x: state.cold_temperature_k, y: cur.reactor_thermal_kwt }, tip: tipFn(1),
+  });
+}
+
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); $("copyMsg").textContent = "Copied."; }
+  catch (_) { $("copyMsg").textContent = "Copy blocked by the browser."; }
+  setTimeout(() => $("copyMsg").textContent = "", 2000);
+}
+$("copyPy").onclick = () => {
+  const args = Object.entries(state).map(([k, v]) => `    ${k}=${typeof v === "string" ? `"${v}"` : v},`).join("\n");
+  copy(`from tlecuil import FSPInputs, size_fsp, report\n\ninp = FSPInputs(\n${args}\n)\nprint(report(inp, size_fsp(inp)))\n`);
+};
+$("copyRes").onclick = () => copy(window._last.rows.map(r => r.join("\t")).join("\n"));
+function applyPreset(k) {
+  currentPreset = k;
+  state = { ...FSP.DEFAULTS, ...PRESETS[k].set };
+  $("preset").value = k;
+  $("presetNote").textContent = PRESETS[k].note;
+  buildInputs(); update();
+}
+$("preset").innerHTML = Object.entries(PRESETS).map(([k, p]) => `<option value="${k}">${p.name}</option>`).join("");
+$("preset").onchange = e => applyPreset(e.target.value);
+$("reset").onclick = () => applyPreset("default");
+
+applyPreset("default");
+</script>
+</body>
+</html>

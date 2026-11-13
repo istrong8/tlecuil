@@ -1,0 +1,398 @@
+{
+  "radiator": [
+    {
+      "key": "B1",
+      "label": "2010 FSP reference, Stirling, 40 kWe",
+      "source": "fsp2010icd; mason2011arch",
+      "role": "calibration",
+      "q_kwt": 140.0,
+      "t_in": 420.0,
+      "t_out": 390.0,
+      "t_sink": 250.0,
+      "area_pub": 185.0,
+      "area_ideal": 139.88249290942304,
+      "area_pred": 185.00000000000003,
+      "err_ideal": -0.24387841670582142,
+      "err_pred": 1.5363086178596762e-16,
+      "eta_p_implied": 0.7561215832941786,
+      "pass": true,
+      "assumed": [
+        "emissivity 0.85 (not given in the source; product eta_p*eps is what is calibrated)",
+        "heat load is '~140 kWt' in the source"
+      ]
+    },
+    {
+      "key": "B2",
+      "label": "2025 GRD, heat-pipe reactor + Stirling, 40 kWe",
+      "source": "mason2025trades",
+      "role": "prediction",
+      "q_kwt": 119.0,
+      "t_in": 433.0,
+      "t_out": 403.0,
+      "t_sink": 270.0,
+      "area_pub": 140.0,
+      "area_ideal": 108.46603513685697,
+      "area_pred": 143.45052109781784,
+      "err_ideal": -0.22524260616530734,
+      "err_pred": 0.024646579270127436,
+      "eta_p_implied": 0.7747573938346927,
+      "pass": true,
+      "assumed": [
+        "'radiator operating range 403-433 K' read as loop inlet/outlet",
+        "sink 270 K = SOW value; the source does not say which sink sized the radiator",
+        "area = 14 panels x 10 m^2 (both faces)"
+      ]
+    },
+    {
+      "key": "B3",
+      "label": "2025 GRD, gas-cooled reactor + Brayton, 40 kWe",
+      "source": "mason2025trades",
+      "role": "prediction",
+      "q_kwt": 180.0,
+      "t_in": 504.0,
+      "t_out": 379.0,
+      "t_sink": 270.0,
+      "area_pub": 180.0,
+      "area_ideal": 139.18935183835555,
+      "area_pred": 184.08329416011682,
+      "err_ideal": -0.22672582312024694,
+      "err_pred": 0.022684967556204565,
+      "eta_p_implied": 0.7732741768797531,
+      "pass": true,
+      "assumed": [
+        "'operating between 379 and 504 K' read as loop inlet/outlet (pumped water loop)",
+        "sink 270 K = SOW value",
+        "area = 18 panels x 10 m^2 (both faces)"
+      ]
+    },
+    {
+      "key": "B4",
+      "label": "Deployable 40 kWe concept, Stirling, south pole",
+      "source": "oleson2022deployable",
+      "role": "prediction",
+      "q_kwt": 126.4,
+      "t_in": 420.0,
+      "t_out": 370.0,
+      "t_sink": 185.0,
+      "area_pub": 133.4,
+      "area_ideal": 116.2763758614329,
+      "area_pred": 153.77999838974853,
+      "err_ideal": -0.12836299953948357,
+      "err_pred": 0.15277360112255264,
+      "eta_p_implied": 0.8716370004605164,
+      "pass": false,
+      "assumed": [
+        "sink built from the source's view factors: 0.5 to a 220 K surface, 0.5 to deep space",
+        "margin not stated; 0 assumed",
+        "source does not say whether 133.4 m^2 is planform or total radiating area"
+      ]
+    }
+  ],
+  "system": [
+    {
+      "key": "S1",
+      "label": "2010 reference: 3 kWe electrical loss, 5 kWe parasitic",
+      "source": "fsp2010icd",
+      "metric": "converter_output_kwe",
+      "pfix": null,
+      "pub": 48.0,
+      "pred": 48.0,
+      "err": 0.0,
+      "identity": true,
+      "pass": true
+    },
+    {
+      "key": "S1",
+      "label": "2010 reference: 3 kWe electrical loss, 5 kWe parasitic",
+      "source": "fsp2010icd",
+      "metric": "reactor_thermal_kwt",
+      "pfix": null,
+      "pub": 186.0,
+      "pred": 184.6153846153846,
+      "err": -0.007444168734491327,
+      "identity": false,
+      "pass": true
+    },
+    {
+      "key": "S1",
+      "label": "2010 reference: 3 kWe electrical loss, 5 kWe parasitic",
+      "source": "fsp2010icd",
+      "metric": "converter_heat_rejection_kwt",
+      "pfix": null,
+      "pub": 140.0,
+      "pred": 136.6153846153846,
+      "err": -0.02417582417582419,
+      "identity": false,
+      "pass": true
+    },
+    {
+      "key": "S2",
+      "label": "2025 HP-Stirling: PMAD 83 %",
+      "source": "mason2025trades",
+      "metric": "converter_output_kwe",
+      "pfix": 2.0,
+      "pub": 50.4,
+      "pred": 50.19277108433735,
+      "err": -0.004111684834576326,
+      "identity": false,
+      "pass": true
+    },
+    {
+      "key": "S2",
+      "label": "2025 HP-Stirling: PMAD 83 %",
+      "source": "mason2025trades",
+      "metric": "converter_heat_rejection_kwt",
+      "pfix": 2.0,
+      "pub": 119.0,
+      "pred": 124.08768406961181,
+      "err": 0.04275364764379673,
+      "identity": false,
+      "pass": true
+    },
+    {
+      "key": "S3",
+      "label": "2025 GC-Brayton: PMAD 90 %",
+      "source": "mason2025trades",
+      "metric": "converter_output_kwe",
+      "pfix": 2.0,
+      "pub": 46.7,
+      "pred": 46.44444444444444,
+      "err": -0.005472281703545181,
+      "identity": false,
+      "pass": true
+    },
+    {
+      "key": "S3",
+      "label": "2025 GC-Brayton: PMAD 90 %",
+      "source": "mason2025trades",
+      "metric": "converter_heat_rejection_kwt",
+      "pfix": 2.0,
+      "pub": 180.0,
+      "pred": 182.2969307637402,
+      "err": 0.012760726465223292,
+      "identity": false,
+      "pass": true
+    },
+    {
+      "key": "S2",
+      "label": "2025 HP-Stirling: PMAD 83 %",
+      "source": "mason2025trades",
+      "metric": "converter_output_kwe",
+      "pfix": 0.0,
+      "pub": 50.4,
+      "pred": 48.19277108433735,
+      "err": -0.04379422451711601,
+      "identity": false,
+      "pass": true
+    },
+    {
+      "key": "S2",
+      "label": "2025 HP-Stirling: PMAD 83 %",
+      "source": "mason2025trades",
+      "metric": "converter_heat_rejection_kwt",
+      "pfix": 0.0,
+      "pub": 119.0,
+      "pred": 119.14323962516735,
+      "err": 0.0012036943291374267,
+      "identity": false,
+      "pass": true
+    },
+    {
+      "key": "S3",
+      "label": "2025 GC-Brayton: PMAD 90 %",
+      "source": "mason2025trades",
+      "metric": "converter_output_kwe",
+      "pfix": 0.0,
+      "pub": 46.7,
+      "pred": 44.44444444444444,
+      "err": -0.04829883416607195,
+      "identity": false,
+      "pass": true
+    },
+    {
+      "key": "S3",
+      "label": "2025 GC-Brayton: PMAD 90 %",
+      "source": "mason2025trades",
+      "metric": "converter_heat_rejection_kwt",
+      "pfix": 0.0,
+      "pub": 180.0,
+      "pred": 174.44682369735904,
+      "err": -0.030850979459116464,
+      "identity": false,
+      "pass": true
+    }
+  ],
+  "scaling": {
+    "HP-Stirling": [
+      {
+        "kwe": 10,
+        "kwt_pub": 49,
+        "kwt_pred0": 41.834002677376176,
+        "kwt_pred2": 48.77844712182062,
+        "m2_pub": 40,
+        "m2_pred2": 39.183869419107054,
+        "eta_implied": 0.2866978116547824
+      },
+      {
+        "kwe": 20,
+        "kwt_pub": 90,
+        "kwt_pred0": 83.66800535475235,
+        "kwt_pred2": 90.6124497991968,
+        "m2_pub": 80,
+        "m2_pred2": 72.7892462794047,
+        "eta_implied": 0.28995983935742975
+      },
+      {
+        "kwe": 40,
+        "kwt_pub": 175,
+        "kwt_pred0": 167.3360107095047,
+        "kwt_pred2": 174.28045515394916,
+        "m2_pub": 140,
+        "m2_pred2": 140.0,
+        "eta_implied": 0.286815834767642
+      },
+      {
+        "kwe": 80,
+        "kwt_pub": 343,
+        "kwt_pred0": 334.6720214190094,
+        "kwt_pred2": 341.61646586345387,
+        "m2_pub": 279,
+        "m2_pred2": 274.42150744119056,
+        "eta_implied": 0.28683831536056764
+      },
+      {
+        "kwe": 100,
+        "kwt_pub": 429,
+        "kwt_pred0": 418.3400267737618,
+        "kwt_pred2": 425.2844712182062,
+        "m2_pub": 351,
+        "m2_pred2": 341.63226116178583,
+        "eta_implied": 0.2855056589996349
+      }
+    ],
+    "GC-Brayton": [
+      {
+        "kwe": 10,
+        "kwt_pub": 72,
+        "kwt_pred0": 54.722817035450866,
+        "kwt_pred2": 64.57292410183202,
+        "m2_pub": 57,
+        "m2_pred2": 50.81339712918659,
+        "eta_implied": 0.18209876543209877
+      },
+      {
+        "kwe": 20,
+        "kwt_pub": 120,
+        "kwt_pred0": 109.44563407090173,
+        "kwt_pred2": 119.29574113728289,
+        "m2_pub": 93,
+        "m2_pred2": 93.8755980861244,
+        "eta_implied": 0.20185185185185184
+      },
+      {
+        "kwe": 40,
+        "kwt_pub": 230,
+        "kwt_pred0": 218.89126814180347,
+        "kwt_pred2": 228.74137520818462,
+        "m2_pub": 180,
+        "m2_pred2": 180.0,
+        "eta_implied": 0.20193236714975846
+      },
+      {
+        "kwe": 80,
+        "kwt_pub": 421,
+        "kwt_pred0": 437.78253628360693,
+        "kwt_pred2": 447.6326433499881,
+        "m2_pub": 317,
+        "m2_pred2": 352.2488038277512,
+        "eta_implied": 0.21588809712325152
+      },
+      {
+        "kwe": 100,
+        "kwt_pub": 517,
+        "kwt_pred0": 547.2281703545086,
+        "kwt_pred2": 557.0782774208898,
+        "m2_pub": 380,
+        "m2_pred2": 438.3732057416267,
+        "eta_implied": 0.21878358048570815
+      }
+    ]
+  },
+  "carnot": [
+    {
+      "label": "2010 reference, effective cycle temps",
+      "source": "fsp2010icd",
+      "eta": 0.26,
+      "th": 778,
+      "tc": 425,
+      "carnot": 0.4537275064267352,
+      "f": 0.5730311614730879
+    },
+    {
+      "label": "2025 HP-Stirling, hot/cold-end temps",
+      "source": "mason2025trades",
+      "eta": 0.288,
+      "th": 1050,
+      "tc": 420,
+      "carnot": 0.6,
+      "f": 0.48
+    },
+    {
+      "label": "2025 GC-Brayton, turbine inlet/cold end",
+      "source": "mason2025trades",
+      "eta": 0.20304347826086958,
+      "th": 1100,
+      "tc": 390,
+      "carnot": 0.6454545454545455,
+      "f": 0.3145744029393754
+    },
+    {
+      "label": "Deployable concept, Stirling (700/150 C)",
+      "source": "oleson2022deployable",
+      "eta": 0.261,
+      "th": 973.15,
+      "tc": 423.15,
+      "carnot": 0.5651749473359708,
+      "f": 0.46180390909090907
+    },
+    {
+      "label": "TDU test, max power (NaK 875 K, water 350 K)",
+      "source": "briggs2016tdu",
+      "eta": 0.233,
+      "th": 875,
+      "tc": 350,
+      "carnot": 0.6,
+      "f": 0.38833333333333336
+    },
+    {
+      "label": "SSE CTPC test, 12.5 kWe (1050 K / 525 K)",
+      "source": "dhar1999sse",
+      "eta": 0.22,
+      "th": 1050,
+      "tc": 525,
+      "carnot": 0.5,
+      "f": 0.44
+    }
+  ],
+  "eta_p_calibrated": 0.7561215832941786,
+  "electronics": [
+    {
+      "key": "S2",
+      "pub": 25,
+      "pred": 43.83927111699301,
+      "q_kw": 10.192771084337352,
+      "t_sink": 270
+    },
+    {
+      "key": "S3",
+      "pub": 13,
+      "pred": 27.717658413081725,
+      "q_kw": 6.444444444444443,
+      "t_sink": 270
+    }
+  ],
+  "sink_sensitivity": {
+    "B2": -0.030404757362391267,
+    "B3": -0.03039649432900278
+  }
+}

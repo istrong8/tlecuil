@@ -1,0 +1,44 @@
+name: Problem report (PR)
+description: Report an error in TLECUIL results, code, or documentation (V&V plan Sec. 9).
+title: "PR: "
+labels: ["problem-report"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What is wrong
+      description: Describe the error. Include inputs that reproduce it.
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Affected versions
+      placeholder: "e.g. 0.1.0-0.2.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact on results
+      options:
+        - Non-conservative (understates reactor power or radiator area)
+        - Conservative (overstates)
+        - No numerical impact (documentation, usability)
+        - Unknown
+    validations:
+      required: true
+  - type: textarea
+    id: cause
+    attributes:
+      label: Cause (filled in by the developer)
+  - type: textarea
+    id: fix
+    attributes:
+      label: Corrective action and regression test (filled in by the developer)
+  - type: checkboxes
+    id: notify
+    attributes:
+      label: Notification
+      options:
+        - label: Users who received affected results have been informed

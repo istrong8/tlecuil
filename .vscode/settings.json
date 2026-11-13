@@ -1,0 +1,37 @@
+{
+  // LaTeX Workshop: build docs/tlecuil_theory.tex with pdflatex + biber.
+  // Requires a TeX distribution with biblatex, biblatex-ieee and biber
+  // (TeX Live or MiKTeX). Open docs/tlecuil_theory.tex and press Ctrl+Alt+B.
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "latexmk (pdflatex + biber)",
+      "tools": ["latexmk"]
+    },
+    {
+      "name": "pdflatex -> biber -> pdflatex x2",
+      "tools": ["pdflatex", "biber", "pdflatex", "pdflatex"]
+    }
+  ],
+  "latex-workshop.latex.tools": [
+    {
+      "name": "latexmk",
+      "command": "latexmk",
+      "args": ["-pdf", "-synctex=1", "-interaction=nonstopmode", "-file-line-error", "%DOC%"],
+      "env": {}
+    },
+    {
+      "name": "pdflatex",
+      "command": "pdflatex",
+      "args": ["-synctex=1", "-interaction=nonstopmode", "-file-line-error", "%DOC%"]
+    },
+    {
+      "name": "biber",
+      "command": "biber",
+      "args": ["%DOCFILE%"]
+    }
+  ],
+  "latex-workshop.latex.recipe.default": "first",
+  "latex-workshop.latex.outDir": "%DIR%",
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": ["."]
+}
